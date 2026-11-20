@@ -1,118 +1,52 @@
-🏭 Machine Monitoring System
+# 🏭 Machine Monitoring System
 
-A real-time Machine Monitoring System built using Python, FastAPI, Streamlit, and SQLite.
+A cloud-based system that collects machine readings every 30 seconds, stores them in a database, and shows them on a password-protected dashboard that works on mobile.
 
-This project simulates industrial machine production data, collects machine readings, stores them in a database, and displays real-time machine performance through an interactive dashboard.
+Currently tested with a **simulated machine**. The next phase connects the real PLC machine.
 
-🚀 Project Overview
+## How it works
 
-The Machine Monitoring System monitors machine production activity by continuously collecting simulated machine readings.
+Machine/PLC (simulated for now) → Logger → API (Render) → Database (Neon PostgreSQL) → Dashboard (Streamlit)
 
-It consists of four main components:
+## Components
 
-1. Machine Simulator – Generates machine production readings.
-2. Machine Logger – Collects readings and stores them in the database.
-3. FastAPI Backend – Provides machine data through API endpoints.
-4. Streamlit Dashboard – Displays machine status and production metrics.
+| File | Purpose |
+|---|---|
+| `machine_simulator.py` | Generates fake machine readings for testing |
+| `logger_api.py` | Sends a reading to the API every 30 seconds |
+| `main.py` | FastAPI backend, secured with an API key |
+| `dashboard.py` | Streamlit dashboard with login, charts, CSV export, anomaly and downtime analysis |
 
-✨ Key Features
+## Technologies
 
-* Real-time machine monitoring.
-* Automated production data simulation.
-* Machine reading collection and database storage.
-* Live machine status monitoring.
-* Production counter tracking.
-* Total production monitoring.
-* Interactive dashboard.
-* API-based data access.
+Python, FastAPI, PostgreSQL (Neon), Streamlit, Render, GitHub
 
-🛠️ Technologies Used
+## Features
 
-* Python
-* FastAPI
-* Streamlit
-* SQLite
-* Pandas
-* REST API
-* Git and GitHub
+- Live machine status (running / stopped)
+- Latest reading, history, date filter, CSV download
+- Production charts, efficiency, anomaly and downtime analysis
+- Password-protected dashboard, API-key-protected backend
+- Works on mobile (add to home screen)
 
-📂 Project Structure
+## Run the logger
 
-Machine_Monitoring_Project/
-│
-├── .venv/
-├── dashboard.py
-├── main.py
-├── machine_simulator.py
-├── machine_logger.py
-├── database.db
-└── README.md
+    pip install requests
+    export API_KEY="your-api-key"
+    python logger_api.py
 
-⚙️ Installation and Setup
+## Hosting (all free tiers)
 
-1. Clone the repository
+- API: Render
+- Database: Neon
+- Dashboard: Streamlit Community Cloud
 
-git clone YOUR_GITHUB_REPOSITORY_URL
-cd Machine_Monitoring_Project
+## Next phase
 
-2. Create a virtual environment
+- Replace the simulator with real PLC readings
+- Support multiple machines
+- Native Android / iOS app
 
-python3 -m venv .venv
+## Author
 
-3. Activate the virtual environment
-
-Mac/Linux:
-
-source .venv/bin/activate
-
-4. Install dependencies
-
-pip install -r requirements.txt
-
-▶️ How to Run the Project
-
-Open four separate terminals in VS Code.
-
-Activate the virtual environment in each terminal:
-
-source .venv/bin/activate
-
-Terminal 1 – Machine Simulator
-
-python machine_simulator.py
-
-Terminal 2 – Machine Logger
-
-python machine_logger.py
-
-Terminal 3 – FastAPI Backend
-
-uvicorn main:app --reload
-
-Terminal 4 – Streamlit Dashboard
-
-streamlit run dashboard.py
-
-📊 Dashboard
-
-The Streamlit dashboard provides a visual interface for monitoring machine production activity and machine status.
-
-🔌 API
-
-The FastAPI backend provides endpoints to access machine monitoring data.
-
-API documentation:
-
-http://127.0.0.1:8000/docs
-
-Latest machine readings:
-
-http://127.0.0.1:8000/latest
-
-🎯 Project Objective
-
-The objective of this project is to demonstrate how industrial machine monitoring systems can collect, process, store, and visualize production data in real time.
-
-👨‍💻 Author
-
-Developed as a Machine Monitoring System project using Python and modern data visualization technologies.
+Developed as a student project for machine production monitoring.
