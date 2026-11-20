@@ -3,8 +3,8 @@ import random
 import requests
 from datetime import datetime
 
-API_URL = "http://127.0.0.1:8000"
-
+# API_URL = "https://machine-monitoring-api.onrender.com"
+API_URL = "https://machine-monitoring-project.onrender.com"  # Alternative URL
 # Simulated machine starting values
 counter = 108
 total = 20812

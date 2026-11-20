@@ -15,133 +15,15 @@ st.set_page_config(
     layout="wide"
 )
 
-# =====================================================
-# PROFESSIONAL INDUSTRIAL THEME
-# =====================================================
-
-st.markdown("""
-<style>
-
-/* Main Background */
-.stApp {
-    background-color: #0B1120;
-    color: #E2E8F0;
-}
-
-/* Main Layout */
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-    max-width: 1500px;
-}
-
-/* Headings */
-h1 {
-    color: #F8FAFC !important;
-    font-size: 2.3rem !important;
-    font-weight: 800 !important;
-}
-
-h2, h3 {
-    color: #E2E8F0 !important;
-    font-weight: 700 !important;
-}
-
-/* Paragraphs */
-p {
-    color: #CBD5E1;
-}
-
-/* Metric Cards */
-[data-testid="stMetric"] {
-    background-color: #172338;
-    border: 1px solid #263750;
-    padding: 22px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* Metric Labels */
-[data-testid="stMetricLabel"] {
-    color: #94A3B8 !important;
-    font-size: 14px !important;
-}
-
-/* Metric Values */
-[data-testid="stMetricValue"] {
-    color: #38BDF8 !important;
-    font-weight: 800 !important;
-    font-size: 27px !important;
-}
-
-/* Buttons */
-.stDownloadButton button {
-    background-color: #2563EB;
-    color: white;
-    border-radius: 8px;
-    border: none;
-    padding: 10px 20px;
-    font-weight: 600;
-}
-
-.stDownloadButton button:hover {
-    background-color: #1D4ED8;
-    color: white;
-}
-
-/* Alerts */
-[data-testid="stAlert"] {
-    border-radius: 10px;
-}
-
-/* Dataframes */
-[data-testid="stDataFrame"] {
-    border: 1px solid #263750;
-    border-radius: 10px;
-}
-
-/* Dividers */
-hr {
-    border-color: #263750 !important;
-}
-
-/* Captions */
-.stCaption {
-    color: #94A3B8 !important;
-}
-
-/* Input Fields */
-[data-testid="stDateInput"] {
-    background-color: #172338;
-    border-radius: 8px;
-}
-
-/* Section spacing */
-[data-testid="stVerticalBlock"] {
-    gap: 1rem;
-}
-
-/* Sidebar */
-[data-testid="stSidebar"] {
-    background-color: #111C2E;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-
-# =====================================================
-# AUTO REFRESH
-# =====================================================
-
+# Auto-refresh every 5 seconds
 st_autorefresh(
     interval=5000,
     limit=None,
     key="machine_dashboard_refresh"
 )
 
-API_URL = "http://127.0.0.1:8000"
-
+# API_URL = "http://127.0.0.1:8000"
+API_URL = "https://machine-monitoring-project.onrender.com"  # Alternative URL
 
 # =====================================================
 # DASHBOARD HEADER
@@ -150,15 +32,10 @@ API_URL = "http://127.0.0.1:8000"
 st.title("⚙️ Industrial Machine Monitoring System")
 
 st.markdown(
-    """
-    **REAL-TIME PRODUCTION MONITORING**
-
-    Machine Performance Analytics | Production Intelligence
-    """
+    "Real-Time Production Monitoring | Machine Performance Analytics"
 )
 
 st.divider()
-
 
 # =====================================================
 # FETCH DATA FROM FASTAPI
@@ -188,7 +65,6 @@ try:
 
     df = pd.DataFrame(readings["readings"])
 
-
     # =================================================
     # MACHINE STATUS
     # =================================================
@@ -199,7 +75,8 @@ try:
 
         df["timestamp"] = pd.to_datetime(
             df["timestamp"],
-            utc=True
+            utc=True,
+            format="ISO8601"
         )
 
         local_timezone = datetime.now().astimezone().tzinfo
@@ -233,12 +110,11 @@ try:
         st.warning("🟡 MACHINE STATUS: NO DATA")
 
     st.caption(
-        "Machine status is determined using the latest database reading. "
-        "Dashboard automatically refreshes every 5 seconds."
+        "Machine status is based on the latest database reading. "
+        "Dashboard refreshes every 5 seconds."
     )
 
     st.divider()
-
 
     # =================================================
     # MACHINE OVERVIEW
@@ -269,7 +145,6 @@ try:
     )
 
     st.divider()
-
 
     # =================================================
     # DATE FILTER
@@ -311,7 +186,6 @@ try:
 
         st.divider()
 
-
         # =============================================
         # CSV DOWNLOAD
         # =============================================
@@ -331,7 +205,6 @@ try:
 
         st.divider()
 
-
         # =============================================
         # FILTERED ANALYTICS
         # =============================================
@@ -350,18 +223,13 @@ try:
                     y="total",
                     title="Production Trend",
                     markers=True,
-                    template="plotly_dark"
+                    template="plotly_white"
                 )
 
                 production_fig.update_layout(
                     xaxis_title="Time",
                     yaxis_title="Total Production",
-                    hovermode="x unified",
-                    paper_bgcolor="#0B1120",
-                    plot_bgcolor="#172338",
-                    font_color="#E2E8F0",
-                    title_font_size=18,
-                    margin=dict(l=20, r=20, t=50, b=20)
+                    hovermode="x unified"
                 )
 
                 st.plotly_chart(
@@ -377,25 +245,19 @@ try:
                     y="counter",
                     title="Machine Counter Trend",
                     markers=True,
-                    template="plotly_dark"
+                    template="plotly_white"
                 )
 
                 counter_fig.update_layout(
                     xaxis_title="Time",
                     yaxis_title="Counter",
-                    hovermode="x unified",
-                    paper_bgcolor="#0B1120",
-                    plot_bgcolor="#172338",
-                    font_color="#E2E8F0",
-                    title_font_size=18,
-                    margin=dict(l=20, r=20, t=50, b=20)
+                    hovermode="x unified"
                 )
 
                 st.plotly_chart(
                     counter_fig,
                     use_container_width=True
                 )
-
 
             # =========================================
             # PRODUCTION STATISTICS
@@ -421,7 +283,6 @@ try:
             )
 
             st.divider()
-
 
             # =========================================
             # ANOMALY DETECTION
@@ -490,7 +351,6 @@ try:
                 )
 
             st.divider()
-
 
             # =========================================
             # DOWNTIME ANALYSIS
@@ -569,7 +429,6 @@ try:
 
             st.divider()
 
-
             # =========================================
             # PRODUCTION EFFICIENCY
             # =========================================
@@ -640,7 +499,6 @@ try:
 
             st.divider()
 
-
             # =========================================
             # HISTORICAL READINGS
             # =========================================
@@ -667,11 +525,6 @@ try:
     else:
 
         st.info("No machine readings available yet.")
-
-
-# =====================================================
-# ERROR HANDLING
-# =====================================================
 
 except requests.exceptions.RequestException as e:
 
