@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException
-import sqlite3
+from pydantic import BaseModel
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import datetime, date
-from pathlib import Path
+import os
 
 # --------------------------------
 # APPLICATION CONFIGURATION
@@ -10,11 +12,10 @@ from pathlib import Path
 app = FastAPI(
     title="Machine Monitoring API",
     description="Advanced API for monitoring machine production",
-    version="2.0.0"
+    version="3.0.0"
 )
 
-# Always use the database inside the project folder
-DATABASE_FILE = Path(__file__).resolve().parent / "machine_readings.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 # --------------------------------
@@ -23,11 +24,49 @@ DATABASE_FILE = Path(__file__).resolve().parent / "machine_readings.db"
 
 def get_database():
 
-    connection = sqlite3.connect(DATABASE_FILE)
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL environment variable is missing")
 
-    connection.row_factory = sqlite3.Row
+    return psycopg2.connect(
+        DATABASE_URL,
+        cursor_factory=RealDictCursor
+    )
 
-    return connection
+
+# --------------------------------
+# CREATE DATABASE TABLE
+# --------------------------------
+
+@app.on_event("startup")
+def create_table():
+
+    connection = get_database()
+
+    cursor = connection.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS readings (
+            id SERIAL PRIMARY KEY,
+            timestamp TIMESTAMPTZ NOT NULL,
+            counter BIGINT NOT NULL,
+            total BIGINT NOT NULL
+        )
+    """)
+
+    connection.commit()
+
+    cursor.close()
+    connection.close()
+
+
+# --------------------------------
+# MACHINE READING MODEL
+# --------------------------------
+
+class MachineReading(BaseModel):
+    timestamp: datetime
+    counter: int
+    total: int
 
 
 # --------------------------------
@@ -44,14 +83,59 @@ def home():
 
 
 # --------------------------------
-# 2. GET LATEST READING
+# 2. RECEIVE MACHINE READING
+# --------------------------------
+
+@app.post("/readings")
+def receive_reading(reading: MachineReading):
+
+    connection = get_database()
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            INSERT INTO readings (timestamp, counter, total)
+            VALUES (%s, %s, %s)
+            RETURNING id
+        """, (
+            reading.timestamp,
+            reading.counter,
+            reading.total
+        ))
+
+        result = cursor.fetchone()
+
+        connection.commit()
+
+        return {
+            "message": "Machine reading saved successfully",
+            "id": result["id"]
+        }
+
+    except Exception as error:
+
+        connection.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# --------------------------------
+# 3. GET LATEST READING
 # --------------------------------
 
 @app.get("/latest")
 def get_latest_reading():
 
     connection = get_database()
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -63,24 +147,23 @@ def get_latest_reading():
 
     reading = cursor.fetchone()
 
+    cursor.close()
     connection.close()
 
     if reading is None:
-
         return {"message": "No readings available"}
 
     return dict(reading)
 
 
 # --------------------------------
-# 3. GET HISTORICAL READINGS
+# 4. GET HISTORICAL READINGS
 # --------------------------------
 
 @app.get("/readings")
 def get_all_readings():
 
     connection = get_database()
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -92,6 +175,7 @@ def get_all_readings():
 
     readings = cursor.fetchall()
 
+    cursor.close()
     connection.close()
 
     return {
@@ -101,14 +185,13 @@ def get_all_readings():
 
 
 # --------------------------------
-# 4. PRODUCTION SUMMARY
+# 5. PRODUCTION SUMMARY
 # --------------------------------
 
 @app.get("/summary")
 def production_summary():
 
     connection = get_database()
-
     cursor = connection.cursor()
 
     cursor.execute("""
@@ -123,19 +206,17 @@ def production_summary():
 
     result = cursor.fetchone()
 
+    cursor.close()
     connection.close()
 
     if result["total_records"] == 0:
-
         return {"message": "No readings available"}
 
     return {
         "total_records": result["total_records"],
-
         "counter_production": (
             result["maximum_counter"] - result["minimum_counter"]
         ),
-
         "total_production": (
             result["maximum_total"] - result["minimum_total"]
         )
@@ -143,25 +224,25 @@ def production_summary():
 
 
 # --------------------------------
-# 5. DATE-WISE READINGS
+# 6. DATE-WISE READINGS
 # --------------------------------
 
 @app.get("/readings/by-date")
 def readings_by_date(reading_date: date):
 
     connection = get_database()
-
     cursor = connection.cursor()
 
     cursor.execute("""
         SELECT id, timestamp, counter, total
         FROM readings
-        WHERE date(timestamp) = ?
+        WHERE timestamp::date = %s
         ORDER BY id ASC
-    """, (reading_date.isoformat(),))
+    """, (reading_date,))
 
     readings = cursor.fetchall()
 
+    cursor.close()
     connection.close()
 
     return {
@@ -172,7 +253,7 @@ def readings_by_date(reading_date: date):
 
 
 # --------------------------------
-# 6. TIME-RANGE READINGS
+# 7. TIME-RANGE READINGS
 # --------------------------------
 
 @app.get("/readings/range")
@@ -197,18 +278,18 @@ def readings_by_time(start: str, end: str):
         )
 
     connection = get_database()
-
     cursor = connection.cursor()
 
     cursor.execute("""
         SELECT id, timestamp, counter, total
         FROM readings
-        WHERE datetime(timestamp) BETWEEN datetime(?) AND datetime(?)
+        WHERE timestamp BETWEEN %s AND %s
         ORDER BY id ASC
-    """, (start, end))
+    """, (start_time, end_time))
 
     readings = cursor.fetchall()
 
+    cursor.close()
     connection.close()
 
     return {
@@ -220,22 +301,23 @@ def readings_by_time(start: str, end: str):
 
 
 # --------------------------------
-# 7. TOTAL RECORD COUNT
+# 8. TOTAL RECORD COUNT
 # --------------------------------
 
 @app.get("/count")
 def get_record_count():
 
     connection = get_database()
-
     cursor = connection.cursor()
 
     cursor.execute("""
-        SELECT COUNT(*) FROM readings
+        SELECT COUNT(*) AS total
+        FROM readings
     """)
 
-    count = cursor.fetchone()[0]
+    count = cursor.fetchone()["total"]
 
+    cursor.close()
     connection.close()
 
     return {
