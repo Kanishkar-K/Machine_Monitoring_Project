@@ -15,6 +15,30 @@ st.set_page_config(
     layout="wide"
 )
 
+# =====================================================
+# LOGIN
+# =====================================================
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if not st.session_state.logged_in:
+
+    st.title("🔒 Machine Monitoring Login")
+
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+
+        if password == st.secrets["APP_PASSWORD"]:
+            st.session_state.logged_in = True
+            st.rerun()
+
+        else:
+            st.error("Wrong password")
+
+    st.stop()
+
 # Auto-refresh every 5 seconds
 st_autorefresh(
     interval=5000,
