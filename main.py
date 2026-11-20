@@ -1,9 +1,18 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, Header
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, date
 import os
+
+API_KEY = os.getenv("API_KEY")
+
+
+def check_key(x_api_key: str = Header(default=None)):
+
+    if API_KEY and x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
 
 # --------------------------------
 # APPLICATION CONFIGURATION
@@ -12,11 +21,11 @@ import os
 app = FastAPI(
     title="Machine Monitoring API",
     description="Advanced API for monitoring machine production",
-    version="3.0.0"
+    version="3.0.0",
+    dependencies=[Depends(check_key)]
 )
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-
 
 # --------------------------------
 # DATABASE CONNECTION
