@@ -1,7 +1,10 @@
+import os
 import time
 import random
 import requests
 from datetime import datetime
+
+API_KEY = os.getenv("API_KEY", "")
 
 # API_URL = "https://machine-monitoring-api.onrender.com"
 API_URL = "https://machine-monitoring-project.onrender.com"  # Alternative URL
@@ -29,6 +32,7 @@ while True:
         response = requests.post(
             f"{API_URL}/readings",
             json=reading,
+            headers={"x-api-key": API_KEY},
             timeout=10
         )
         print("Sent:", reading, "| Status:", response.status_code)

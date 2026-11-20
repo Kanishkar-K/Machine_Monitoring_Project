@@ -47,7 +47,9 @@ st_autorefresh(
 )
 
 # API_URL = "http://127.0.0.1:8000"
-API_URL = "https://machine-monitoring-project.onrender.com"  # Alternative URL
+API_URL = "https://machine-monitoring-project.onrender.com" 
+API_KEY = st.secrets.get("API_KEY", "")
+HEADERS = {"x-api-key": API_KEY}
 
 # =====================================================
 # DASHBOARD HEADER
@@ -68,15 +70,15 @@ st.divider()
 try:
 
     latest_response = requests.get(
-        f"{API_URL}/latest", timeout=5
+        f"{API_URL}/latest", headers=HEADERS,timeout=5
     )
 
     summary_response = requests.get(
-        f"{API_URL}/summary", timeout=5
+        f"{API_URL}/summary", headers=HEADERS,timeout=5
     )
 
     readings_response = requests.get(
-        f"{API_URL}/readings", timeout=5
+        f"{API_URL}/readings", headers=HEADERS,timeout=5
     )
 
     latest_response.raise_for_status()
